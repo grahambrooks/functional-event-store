@@ -4,22 +4,21 @@
 
 (facts "about events"
        (fact (new-customer-event "name" "email") => {:event-type :new-customer
-                                                     :name "name"
-                                                     :email "email"} )
+                                                     :name       "name"
+                                                     :email      "email"} )
        (fact (new-customer-email-event "a@b.com") => {:event-type :new-customer-email
-                                                :email "a@b.com" }))
+                                                      :email      "a@b.com" }))
 
 
 (facts "about new customer events"
        (fact "customers can have just a name"
              (new-customer-event "fred") => {:event-type :new-customer
-                                             :name "fred"
-                                             :email nil})
+                                             :name       "fred"
+                                             :email      nil})
        (fact "customers can start with name and email"
              (new-customer-event "fred" "a@b") => {:event-type :new-customer
-                                                   :name "fred"
-                                                   :email "a@b"}))
-       
+                                                   :name       "fred"
+                                                   :email      "a@b"}))
 
 (facts "about handlers"
        (fact "Updates defined entity fields"
@@ -35,7 +34,8 @@
                            (new-customer-name-event "Graham")
                            (new-customer-email-event "a@b")
                            (new-customer-email-event "b@c")]]
-               (hydrate-entity {:name nil :email nil} events) => {:name "Graham" :email "b@c"})))
+               (hydrate-entity {:name nil :email nil} events) => {:name  "Graham"
+                                                                  :email "b@c"})))
 
 (facts "about event store"
        (fact "can add event to empty store"
@@ -46,8 +46,11 @@
 (facts "about event processing"
        (fact (defaggregate {} => {}))
        (fact (defaggregate {:name nil} => {:name nil}))
-       (fact (defaggregate {:name nil :email nil}) => {:name nil :email nil})
-       (fact (new-customer-event "a" "b") => {:email "b", :name "a", :event-type :new-customer})
+       (fact (defaggregate {:name nil :email nil}) => {:name  nil
+                                                       :email nil})
+       (fact (new-customer-event "a" "b") => {:email      "b",
+                                              :name       "a",
+                                              :event-type :new-customer})
        
        (fact "event does not add fields"
              (let [aggregate (defaggregate {:name nil})]
@@ -59,5 +62,6 @@
        
        (fact
         (let [customer {:name "foo" :email "bar"}]
-          (handle-new-customer-email customer (new-customer-email-event "a@b.com")) => {:name "foo" :email "a@b.com"})))
+          (handle-new-customer-email customer (new-customer-email-event "a@b.com")) => {:name  "foo"
+                                                                                        :email "a@b.com"})))
 

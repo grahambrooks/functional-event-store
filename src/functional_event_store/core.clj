@@ -10,12 +10,12 @@
 
 (defn new-customer-event
   ([name] {:event-type :new-customer
-           :name name
-           :email nil})
+           :name       name
+           :email      nil})
   ([name email]
    {:event-type :new-customer
-    :name name
-    :email email}))
+    :name       name
+    :email      email}))
 
 
 (defn new-customer-name-event
@@ -46,14 +46,14 @@
 
 
 (def handler-map
-  {:new-customer handle-new-customer-event
+  {:new-customer       handle-new-customer-event
    :new-customer-email handle-new-customer-email
-   :new-customer-name handle-new-customer-name})
+   :new-customer-name  handle-new-customer-name})
 
 (defn handle-event
   [entity event handlers]
   (let [event-type (:event-type event)
-        handler (event-type handlers)]
+        handler    (event-type handlers)]
     (handler entity event)))
 
 
