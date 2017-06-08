@@ -2,99 +2,48 @@
   (:require [midje.sweet :refer :all]
             [functional-event-store.core :refer :all]))
 
-
-(defmacro defaggregate
-  "An aggregate entity has attributes for the current structure - how
-  to create new ones and an instance state. The structure meta data
-  helps build new instnaces and apply event data to the state."
-  [structure]
-  structure)
-
-
-(defn new-customer-event
-  ([name] {:event-type :new-customer
-           :customer {:name name
-                      :email nil}})
-  ([name email]
-   {:event-type :new-customer
-    :name name
-    :email email}))
+(facts "about events"
+       (fact (new-customer-event "name" "email") => {:event-type :new-customer
+                                                     :name "name"
+                                                     :email "email"} )
+       (fact (new-customer-email-event "a@b.com") => {:event-type :new-customer-email
+                                                :email "a@b.com" }))
 
 
-(defn new-customer-name
-  [name]
-  {:event-type :new-customer-name
-   :name name })
+(facts "about new customer events"
+       (fact "customers can have just a name"
+             (new-customer-event "fred") => {:event-type :new-customer
+                                             :name "fred"
+                                             :email nil})
+       (fact "customers can start with name and email"
+             (new-customer-event "fred" "a@b") => {:event-type :new-customer
+                                                   :name "fred"
+                                                   :email "a@b"}))
+       
 
-(defn new-customer-email
-  [email]
-  {:event-type :new-customer-email
-   :email email })
+(facts "about handlers"
+       (fact "Updates defined entity fields"
+             (handle-event {:name nil} (new-customer-name-event "foo") handler-map) => {:name "foo"})
+       (fact "leaves entity unchanged if field not present in the entity"
+             (handle-event {:name "foo"} (new-customer-email-event "a@b") handler-map) => {:name "foo"})
+       (fact "leaves empty entity unchanged"
+             (handle-event {} (new-customer-email-event "a@b") handler-map) => {}))
 
-(defn default-handler
-  [entity event]
-  (merge entity (select-keys event (keys entity))))
+(facts "about building entities"
+       (fact "entity state represents the latest event states"
+             (let [events [(new-customer-event "graham")
+                           (new-customer-name-event "Graham")
+                           (new-customer-email-event "a@b")
+                           (new-customer-email-event "b@c")]]
+               (hydrate-entity {:name nil :email nil} events) => {:name "Graham" :email "b@c"})))
 
-(defn handle-new-customer-event
-  [customer event]
-  (default-handler customer event))
-
-(defn handle-new-customer-email
-  [customer event]
-  (default-handler customer event))
-
-(defn handle-new-customer-name
-  [customer event]
-  (default-handler customer event))
-
-
-(def handler-map
-  {:new-customer handle-new-customer-event
-   :new-customer-email handle-new-customer-email
-   :new-customer-name handle-new-customer-name})
-
-(defn handle-event
-  [entity event handlers]
-  (let [event-type (:event-type event)
-        handler (event-type handlers)]
-    (handler entity event)))
-
-
-(defn hydrate-entity
-  [entity events]
-  (if (empty? events) entity (hydrate-entity (handle-event entity (first events) handler-map) (rest events))))
-
-(defn add-event
-  ([event] [event])
-  ([store event] (concat store [event])))
-
-
-(facts "about event mapping"
-       (fact "Calls handler"
-             (handle-event {:name nil} (new-customer-name "foo") handler-map) => {:name "foo"}))
-
-(facts "hydration of entity"
-       (fact
-        (let [events [(new-customer-event "graham")
-                      (new-customer-name "Graham")
-                      (new-customer-email "a@b")
-                      (new-customer-email "b@c")]]
-          (hydrate-entity {:name nil :email nil} events) => {:name "Graham" :email "b@c"})))
-
-(facts "event store"
+(facts "about event store"
        (fact "can add event to empty store"
              (add-event :event) => [:event])
        (fact "can add event occupied storeempty store"
              (add-event [:event1] :event2) => [:event1 :event2]))
 
-(facts "event structures"
-       (fact (new-customer-event "name" "email") => {:event-type :new-customer
-                                                     :name "name"
-                                                     :email "email"} )
-       (fact (new-customer-email "a@b.com") => {:event-type :new-customer-email
-                                                :email "a@b.com" }))
-
-(facts "event processing"
+(facts "about event processing"
        (fact (defaggregate {} => {}))
        (fact (defaggregate {:name nil} => {:name nil}))
        (fact (defaggregate {:name nil :email nil}) => {:name nil :email nil})
@@ -110,5 +59,5 @@
        
        (fact
         (let [customer {:name "foo" :email "bar"}]
-          (handle-new-customer-email customer (new-customer-email "a@b.com")) => {:name "foo" :email "a@b.com"})))
+          (handle-new-customer-email customer (new-customer-email-event "a@b.com")) => {:name "foo" :email "a@b.com"})))
 
