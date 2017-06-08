@@ -50,17 +50,19 @@
    :new-customer-email handle-new-customer-email
    :new-customer-name  handle-new-customer-name})
 
+; tag::handle-event[]
 (defn handle-event
   [entity event handlers]
   (let [event-type (:event-type event)
         handler    (event-type handlers)]
     (handler entity event)))
+; end::handle-event[]
 
-
+;// tag::hydrate-entity[]
 (defn hydrate-entity
   [entity events]
   (if (empty? events) entity (hydrate-entity (handle-event entity (first events) handler-map) (rest events))))
-
+;// end::hydrate-entity[]
 (defn add-event
   ([event] [event])
   ([store event] (concat store [event])))
