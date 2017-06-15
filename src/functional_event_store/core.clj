@@ -7,7 +7,7 @@
   [structure]
   structure)
 
-
+; tag::new-customer-event[]
 (defn new-customer-event
   ([name] {:event-type :new-customer
            :name       name
@@ -16,7 +16,7 @@
    {:event-type :new-customer
     :name       name
     :email      email}))
-
+; end::new-customer-event[]
 
 (defn new-customer-name-event
   [name]
@@ -28,13 +28,17 @@
   {:event-type :new-customer-email
    :email email })
 
+; tag::default-handler[]
 (defn default-handler
   [entity event]
   (merge entity (select-keys event (keys entity))))
+                                        ; end::default-handler[]
 
+; tag::handle-new-customer-event[]
 (defn handle-new-customer-event
   [customer event]
   (default-handler customer event))
+                                        ; end::handle-new-customer-event[]
 
 (defn handle-new-customer-email
   [customer event]
@@ -44,12 +48,12 @@
   [customer event]
   (default-handler customer event))
 
-
+; tag::handler-map[]
 (def handler-map
   {:new-customer       handle-new-customer-event
    :new-customer-email handle-new-customer-email
    :new-customer-name  handle-new-customer-name})
-
+; end::handler-map[]
 ; tag::handle-event[]
 (defn handle-event
   [entity event handlers]
